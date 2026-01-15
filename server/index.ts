@@ -166,7 +166,7 @@ app.get("/pay/:sessionId", (req, res) => {
   return res.redirect(`https://checkout.stripe.com/pay/${sessionId}`);
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 80;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
