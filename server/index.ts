@@ -5,23 +5,27 @@ import Database from "better-sqlite3";
 const db = new Database("links.db");
 
 // Create all tables at startup
-db.prepare(`
+db.prepare(
+  `
   CREATE TABLE IF NOT EXISTS links (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id TEXT UNIQUE,
     used INTEGER DEFAULT 0,
     expires_at INTEGER
   )
-`).run();
+`,
+).run();
 
-db.prepare(`
+db.prepare(
+  `
   CREATE TABLE IF NOT EXISTS api_usage (
     api_key TEXT,
     date TEXT,
     count INTEGER DEFAULT 0,
     PRIMARY KEY (api_key, date)
   )
-`).run();
+`,
+).run();
 
 const app = express();
 
@@ -44,10 +48,14 @@ function requireApiKey(req, res, next) {
   }
 
   const today = new Date().toISOString().slice(0, 10);
-  const row = db.prepare(`
+  const row = db
+    .prepare(
+      `
     SELECT count FROM api_usage
     WHERE api_key = ? AND date = ?
-  `).get(key, today);
+  `,
+    )
+    .get(key, today);
 
   if (row && row.count >= 5) {
     return res.status(429).json({ error: "Daily limit reached" });
@@ -71,11 +79,13 @@ app.post("/webhook", express.raw({ type: "application/json" }), (req, res) => {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
 
-    db.prepare(`
+    db.prepare(
+      `
       UPDATE links
       SET used = 1
       WHERE session_id = ?
-    `).run(session.id);
+    `,
+    ).run(session.id);
   }
 
   res.json({ received: true });
@@ -90,14 +100,15 @@ app.post("/create-link", requireApiKey, async (req, res) => {
       return res.status(400).json({ error: "Invalid price" });
     }
 
-
     // Increment API usage
-    db.prepare(`
+    db.prepare(
+      `
       INSERT INTO api_usage (api_key, date, count)
       VALUES (?, ?, 1)
       ON CONFLICT(api_key, date)
       DO UPDATE SET count = count + 1
-    `).run(req.headers["x-api-key"], today);
+    `,
+    ).run(req.headers["x-api-key"], today);
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -115,21 +126,22 @@ app.post("/create-link", requireApiKey, async (req, res) => {
       cancel_url: "https://example.com/cancel",
     });
 
-    db.prepare(`
+    db.prepare(
+      `
       INSERT INTO links (session_id, expires_at)
       VALUES (?, ?)
-    `).run(
+    `,
+    ).run(
       session.id,
-      Date.now() + 60 * 60 * 1000 // expires in 1 hour
+      Date.now() + 60 * 60 * 1000, // expires in 1 hour
     );
 
     const host = req.get("x-forwarded-host") || req.get("host");
     const proto = req.get("x-forwarded-proto") || req.protocol;
 
     res.json({
-      private_url: `${proto}://${host}/pay/${session.id}`
+      private_url: `${proto}://${host}/pay/${session.id}`,
     });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Stripe error" });
@@ -143,7 +155,7 @@ app.get("/pay/:sessionId", (req, res) => {
       `SELECT * FROM links
        WHERE session_id = ?
        AND used = 0
-       AND expires_at > ?`
+       AND expires_at > ?`,
     )
     .get(sessionId, Date.now());
 
@@ -154,8 +166,7 @@ app.get("/pay/:sessionId", (req, res) => {
   return res.redirect(`https://checkout.stripe.com/pay/${sessionId}`);
 });
 
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, "0.0.0.0", () => {
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
