@@ -1,22 +1,16 @@
-import express, { type Request, Response, NextFunction } from "express";
-import { createServer } from "http";
+import express from "express";
 import Stripe from "stripe";
 import Database from "better-sqlite3";
-import { setupVite } from "./vite";
-import { registerRoutes } from "./routes";
-
-const app = express();
 
 const db = new Database("links.db");
 
+// Create all tables at startup
 db.prepare(`
   CREATE TABLE IF NOT EXISTS links (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id TEXT UNIQUE,
-    price REAL,
     used INTEGER DEFAULT 0,
-    expires_at INTEGER,
-    created_at INTEGER DEFAULT (strftime('%s', 'now') * 1000)
+    expires_at INTEGER
   )
 `).run();
 
@@ -29,115 +23,84 @@ db.prepare(`
   )
 `).run();
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+const app = express();
 
 app.use((req, res, next) => {
-  if (req.originalUrl === "/api/webhook") {
+  if (req.originalUrl === "/webhook") {
     next();
   } else {
     express.json()(req, res, next);
   }
 });
-app.use(express.urlencoded({ extended: false }));
 
-app.post("/api/webhook", express.raw({ type: "application/json" }), (req, res) => {
+const API_KEY = process.env.API_KEY;
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
+
+function requireApiKey(req, res, next) {
+  const key = req.headers["x-api-key"];
+  if (!API_KEY || key !== API_KEY) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  const row = db.prepare(`
+    SELECT count FROM api_usage
+    WHERE api_key = ? AND date = ?
+  `).get(key, today);
+
+  if (row && row.count >= 5) {
+    return res.status(429).json({ error: "Daily limit reached" });
+  }
+
+  next();
+}
+
+// Webhook handler (must be before other routes)
+app.post("/webhook", express.raw({ type: "application/json" }), (req, res) => {
+  const sig = req.headers["stripe-signature"];
+
+  let event;
   try {
-    const event = JSON.parse(req.body.toString());
-
-    if (event.type === "checkout.session.completed") {
-      const session = event.data.object;
-      db.prepare(`
-        UPDATE links
-        SET used = 1
-        WHERE session_id = ?
-      `).run(session.id);
-    }
-
-    res.json({ received: true });
+    event = stripe.webhooks.constructEvent(req.body, sig, WEBHOOK_SECRET);
   } catch (err) {
-    console.error("Webhook error:", err);
-    res.status(400).json({ error: "Webhook error" });
-  }
-});
-
-app.get("/pay/:sessionId", (req, res) => {
-  const { sessionId } = req.params;
-
-  const link = db
-    .prepare(
-      `SELECT * FROM links
-       WHERE session_id = ?
-       AND used = 0
-       AND expires_at > ?`
-    )
-    .get(sessionId, Date.now()) as { session_id: string } | undefined;
-
-  if (!link) {
-    return res.status(403).send(`
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Link Expired</title>
-        <style>
-          body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            background: #f5f5f5;
-          }
-          .container {
-            text-align: center;
-            padding: 40px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-          }
-          h1 { color: #dc2626; margin-bottom: 12px; }
-          p { color: #666; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <h1>Link Expired or Already Used</h1>
-          <p>This payment link is no longer valid.</p>
-        </div>
-      </body>
-      </html>
-    `);
+    console.log(`Webhook signature verification failed: ${err.message}`);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  db.prepare(`
-    UPDATE links
-    SET used = 1
-    WHERE session_id = ?
-  `).run(sessionId);
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object;
 
-  return res.redirect(`https://checkout.stripe.com/c/pay/${sessionId}`);
+    db.prepare(`
+      UPDATE links
+      SET used = 1
+      WHERE session_id = ?
+    `).run(session.id);
+  }
+
+  res.json({ received: true });
 });
 
-app.post("/api/create-link", async (req, res) => {
+app.post("/create-link", requireApiKey, async (req, res) => {
+  const today = new Date().toISOString().slice(0, 10);
+
   try {
     const { price } = req.body;
-
-    if (!price || typeof price !== "number" || price <= 0) {
-      return res.status(400).json({ error: "Valid price is required" });
+    if (typeof price !== "number" || price <= 0) {
+      return res.status(400).json({ error: "Invalid price" });
     }
 
-    if (price > 999999) {
-      return res.status(400).json({ error: "Price cannot exceed $999,999" });
-    }
 
-    const host = req.get("host") || "localhost:5000";
-    const protocol = req.headers["x-forwarded-proto"] || req.protocol || "https";
+    // Increment API usage
+    db.prepare(`
+      INSERT INTO api_usage (api_key, date, count)
+      VALUES (?, ?, 1)
+      ON CONFLICT(api_key, date)
+      DO UPDATE SET count = count + 1
+    `).run(req.headers["x-api-key"], today);
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      payment_method_types: ["card"],
       line_items: [
         {
           price_data: {
@@ -148,51 +111,49 @@ app.post("/api/create-link", async (req, res) => {
           quantity: 1,
         },
       ],
-      success_url: `${protocol}://${host}/success`,
-      cancel_url: `${protocol}://${host}/cancel`,
+      success_url: "https://example.com/success",
+      cancel_url: "https://example.com/cancel",
     });
 
     db.prepare(`
-      INSERT INTO links (session_id, price, expires_at)
-      VALUES (?, ?, ?)
+      INSERT INTO links (session_id, expires_at)
+      VALUES (?, ?)
     `).run(
       session.id,
-      price,
-      Date.now() + 60 * 60 * 1000
+      Date.now() + 60 * 60 * 1000 // expires in 1 hour
     );
 
+    const host = req.get("x-forwarded-host") || req.get("host");
+    const proto = req.get("x-forwarded-proto") || req.protocol;
+
     res.json({
-      private_url: `${protocol}://${host}/pay/${session.id}`,
+      private_url: `${proto}://${host}/pay/${session.id}`
     });
+
   } catch (err) {
-    console.error("Stripe error:", err);
-    res.status(500).json({ error: "Failed to create payment link" });
+    console.error(err);
+    res.status(500).json({ error: "Stripe error" });
   }
 });
 
-(async () => {
-  const server = createServer(app);
+app.get("/pay/:sessionId", (req, res) => {
+  const { sessionId } = req.params;
+  const link = db
+    .prepare(
+      `SELECT * FROM links
+       WHERE session_id = ?
+       AND used = 0
+       AND expires_at > ?`
+    )
+    .get(sessionId, Date.now());
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-    res.status(status).json({ message });
-    console.error(err);
-  });
-
-  await registerRoutes(server, app);
-
-  if (app.get("env") === "development") {
-    await setupVite(server, app);
-  } else {
-    const { serveStatic } = await import("./static");
-    serveStatic(app);
+  if (!link) {
+    return res.status(403).send("Link expired or already used");
   }
 
-  const port = 5000;
-  server.listen(port, "0.0.0.0", () => {
-    console.log(`Server running on port ${port}`);
-  });
-})();
+  return res.redirect(`https://checkout.stripe.com/pay/${sessionId}`);
+});
 
-export { db };
+app.listen(5000, () => {
+  console.log("Server running on port 5000");
+});
