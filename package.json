@@ -1,9 +1,8 @@
 {
-  "name": "paylink",
-  "version": "1.0.0",
+  "name": "one-time-checkout",
   "type": "module",
   "scripts": {
-    "start": "node server/index.js"
+    "dev": "tsx server/index.ts"
   },
   "dependencies": {
     "express": "^4.19.2",
