@@ -28,6 +28,7 @@ This application allows users to create private Stripe checkout payment links th
 
 Required secrets:
 - `STRIPE_SECRET_KEY`: Your Stripe secret key (test or live)
+- `STRIPE_WEBHOOK_SECRET`: Stripe webhook signing secret for secure webhook verification
 
 ## Key Files
 
