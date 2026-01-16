@@ -10,11 +10,19 @@ db.prepare(
   CREATE TABLE IF NOT EXISTS links (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id TEXT UNIQUE,
+    checkout_url TEXT,
     used INTEGER DEFAULT 0,
     expires_at INTEGER
   )
 `,
 ).run();
+
+// Add checkout_url column if missing (for existing databases)
+try {
+  db.prepare(`ALTER TABLE links ADD COLUMN checkout_url TEXT`).run();
+} catch (e) {
+  // Column already exists, ignore
+}
 
 db.prepare(
   `
@@ -29,13 +37,6 @@ db.prepare(
 
 const app = express();
 
-app.use((req, res, next) => {
-  if (req.originalUrl === "/webhook") {
-    next();
-  } else {
-    express.json()(req, res, next);
-  }
-});
 
 const API_KEY = process.env.API_KEY;
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
@@ -64,14 +65,14 @@ function requireApiKey(req, res, next) {
   next();
 }
 
-// Webhook handler (must be before other routes)
+// Webhook handler (must be before JSON middleware)
 app.post("/webhook", express.raw({ type: "application/json" }), (req, res) => {
-  const sig = req.headers["stripe-signature"];
+  const sig = req.headers["stripe-signature"] as string;
 
-  let event;
+  let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, WEBHOOK_SECRET);
-  } catch (err) {
+    event = stripe.webhooks.constructEvent(req.body, sig, WEBHOOK_SECRET as string);
+  } catch (err: any) {
     console.log(`Webhook signature verification failed: ${err.message}`);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
@@ -91,7 +92,10 @@ app.post("/webhook", express.raw({ type: "application/json" }), (req, res) => {
   res.json({ received: true });
 });
 
-app.post("/create-link", requireApiKey, async (req, res) => {
+// JSON middleware for other routes
+app.use(express.json());
+
+app.post("/create-link", requireApiKey, async (req: any, res: any) => {
   const today = new Date().toISOString().slice(0, 10);
 
   try {
@@ -128,17 +132,16 @@ app.post("/create-link", requireApiKey, async (req, res) => {
 
     db.prepare(
       `
-      INSERT INTO links (session_id, expires_at)
-      VALUES (?, ?)
+      INSERT INTO links (session_id, checkout_url, expires_at)
+      VALUES (?, ?, ?)
     `,
     ).run(
       session.id,
+      session.url,
       Date.now() + 60 * 60 * 1000, // expires in 1 hour
     );
 
-    if (Date.now() > link.expires_at) {
-      return res.status(410).send("Link expired");
-    }
+    
 
     const host = req.get("x-forwarded-host") || req.get("host");
     const proto = req.get("x-forwarded-proto") || req.protocol;
@@ -168,11 +171,16 @@ app.get("/pay/:sessionId", (req, res) => {
     return res.status(410).send("Link expired or already used");
   }
 
-  return res.redirect(
-    `https://checkout.stripe.com/pay/${sessionId}`
-  );
+  if (!link.checkout_url) {
+    return res.status(500).send("Invalid payment link");
+  }
+
+  return res.redirect(link.checkout_url);
 });
 
+app.get("/", (req, res) => {
+  res.send("Payment Link API is running");
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
