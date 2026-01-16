@@ -230,7 +230,7 @@ app.get("/", (req, res) => {
       <p>
         For questions, billing issues, or support, contact:
         <br />
-        <strong>Email:</strong> support@your-email.com
+        <strong>Email:</strong> offers@dealdily.com
       </p>
 
       <h2>Refund policy</h2>
