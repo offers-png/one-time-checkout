@@ -179,7 +179,72 @@ app.get("/pay/:sessionId", (req, res) => {
 });
 
 app.get("/", (req, res) => {
-  res.send("Payment Link API is running");
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>PayLink – Secure One-Time Payment Links</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          max-width: 800px;
+          margin: 40px auto;
+          padding: 0 20px;
+          line-height: 1.6;
+          color: #111;
+        }
+        h1, h2 {
+          color: #222;
+        }
+        footer {
+          margin-top: 40px;
+          font-size: 0.9em;
+          color: #555;
+        }
+      </style>
+    </head>
+    <body>
+      <h1>PayLink – Secure One-Time Payment Links</h1>
+
+      <p>
+        PayLink is a software service that allows businesses and individuals
+        to generate secure, single-use payment links for online payments.
+      </p>
+
+      <h2>How it works</h2>
+      <ul>
+        <li>Create a one-time payment link</li>
+        <li>Share the link with a customer</li>
+        <li>The link expires after one use or a time limit</li>
+      </ul>
+
+      <h2>What customers are paying for</h2>
+      <p>
+        Customers are paying for access to a secure checkout link that allows
+        them to complete a payment online using Stripe.
+      </p>
+
+      <h2>Support</h2>
+      <p>
+        For questions, billing issues, or support, contact:
+        <br />
+        <strong>Email:</strong> support@your-email.com
+      </p>
+
+      <h2>Refund policy</h2>
+      <p>
+        Refunds are handled on a case-by-case basis. Customers may contact
+        support to request assistance with payments or disputes.
+      </p>
+
+      <footer>
+        <p>© ${new Date().getFullYear()} PayLink. All rights reserved.</p>
+      </footer>
+    </body>
+    </html>
+  `);
 });
 
 const PORT = process.env.PORT || 3000;
