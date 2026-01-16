@@ -179,6 +179,30 @@ app.get("/pay/:sessionId", (req, res) => {
 });
 
 app.get("/", (req, res) => {
+  res.status(200).send(`
+    <html>
+      <head>
+        <title>PayLink — Secure One-Time Payments</title>
+        <meta name="description" content="Secure one-time Stripe payment links">
+      </head>
+      <body style="font-family: Arial; max-width: 700px; margin: 40px auto;">
+        <h1>PayLink</h1>
+        <p>PayLink provides secure, single-use payment links powered by Stripe.</p>
+
+        <h3>What we sell</h3>
+        <p>Access to one-time secure checkout links.</p>
+
+        <h3>Contact</h3>
+        <p>Email: offers@dealdily.com</p>
+
+        <h3>Refunds</h3>
+        <p>Refunds handled case-by-case. Contact support.</p>
+      </body>
+    </html>
+  `);
+});
+
+app.get("/", (req, res) => {
   res.send(`
     <!DOCTYPE html>
     <html lang="en">
