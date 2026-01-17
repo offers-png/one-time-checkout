@@ -2,6 +2,8 @@ import express from "express";
 import Stripe from "stripe";
 import Database from "better-sqlite3";
 import path from "path";
+import crypto from "crypto";
+
 
 const app = express();
 const db = new Database("links.db");
@@ -44,9 +46,11 @@ app.post(
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
 
+      const apiKey = "plk_live_" + crypto.randomUUID().replace(/-/g, "");
+
       const payload = JSON.stringify({
-        type: "access",
-        message: "Welcome! Your access is now active."
+        type: "api_key",
+        value: apiKey,
       });
 
       db.prepare(`
@@ -151,9 +155,9 @@ app.get("/deliver/:sessionId", (req, res) => {
   res.send(`
     <html>
       <body style="font-family:system-ui;text-align:center;padding-top:80px">
-        <h1>✅ Access Granted</h1>
-        <p>${payload.message || "Access unlocked."}</p>
-        <small>Session: ${sessionId}</small>
+        <h1>Your API Key</h1>
+        <p style="font-family:monospace;background:#f0f0f0;padding:16px;border-radius:8px;display:inline-block">${payload.value || "N/A"}</p>
+        <p style="color:#666;margin-top:16px">Save this key - it will not be shown again.</p>
       </body>
     </html>
   `);
