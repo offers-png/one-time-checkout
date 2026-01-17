@@ -1,8 +1,7 @@
 import express from "express";
 import Stripe from "stripe";
 import Database from "better-sqlite3";
-import { createServer } from "http";
-import { setupVite } from "./vite";
+import path from "path";
 
 const db = new Database("links.db");
 
@@ -50,6 +49,9 @@ app.post("/api/webhook", express.raw({ type: "application/json" }), (req, res) =
 // JSON middleware for other routes
 app.use(express.json());
 
+// Serve static files
+app.use(express.static(path.join(process.cwd(), "public")));
+
 // Create payment link API
 app.post("/api/create-link", async (req: any, res: any) => {
   try {
@@ -74,8 +76,8 @@ app.post("/api/create-link", async (req: any, res: any) => {
           quantity: 1,
         },
       ],
-      success_url: `${baseUrl}/success`,
-      cancel_url: `${baseUrl}/cancel`,
+      success_url: `${baseUrl}/success.html`,
+      cancel_url: `${baseUrl}/cancel.html`,
     });
 
     db.prepare(`
@@ -114,13 +116,12 @@ app.get("/pay/:sessionId", (req: any, res: any) => {
   return res.redirect(link.checkout_url);
 });
 
-const server = createServer(app);
+// Fallback to index.html
+app.get("*", (req, res) => {
+  res.sendFile(path.join(process.cwd(), "public", "index.html"));
+});
 
-(async () => {
-  await setupVite(server, app);
-  
-  const PORT = 5000;
-  server.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on port ${PORT}`);
-  });
-})();
+const PORT = 5000;
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on port ${PORT}`);
+});
