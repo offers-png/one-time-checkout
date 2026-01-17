@@ -94,8 +94,7 @@ app.post("/api/create-link", async (req: any, res: any) => {
   }
 });
 
-// Payment redirect
-app.get("/pay/:sessionId", (req: any, res: any) => {
+app.get("/pay/:sessionId", (req, res) => {
   const { sessionId } = req.params;
 
   const link = db.prepare(`
@@ -106,15 +105,59 @@ app.get("/pay/:sessionId", (req: any, res: any) => {
   `).get(sessionId, Date.now()) as any;
 
   if (!link) {
-    return res.status(410).send("Link expired or already used");
+    return res.status(410).send("❌ This access link is expired or already used.");
   }
 
-  if (!link.checkout_url) {
-    return res.status(500).send("Invalid payment link");
-  }
+  // 🔒 Mark as used immediately
+  db.prepare(`
+    UPDATE links SET used = 1 WHERE session_id = ?
+  `).run(sessionId);
 
-  return res.redirect(link.checkout_url);
+  // ✅ Deliver the payload (V1)
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Access Granted</title>
+        <meta charset="UTF-8" />
+        <style>
+          body {
+            font-family: system-ui, sans-serif;
+            background: #f4f6f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+          }
+          .card {
+            background: white;
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,.1);
+            max-width: 420px;
+            text-align: center;
+          }
+          h1 { color: #22c55e; }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <h1>✅ Access Granted</h1>
+          <p>Your payment was confirmed.</p>
+          <p>This link has now been locked.</p>
+
+          <hr />
+
+          <p><strong>Delivery Payload:</strong></p>
+          <p>This is where your product / access / key will appear.</p>
+
+          <small>Session: ${sessionId}</small>
+        </div>
+      </body>
+    </html>
+  `);
 });
+
 
 // Fallback to index.html
 app.get("*", (req, res) => {
