@@ -4,7 +4,6 @@ import Database from "better-sqlite3";
 import path from "path";
 import crypto from "crypto";
 
-
 const app = express();
 const db = new Database("links.db");
 const PLAN_MAP: Record<string, number | null> = {
@@ -113,7 +112,7 @@ app.post("/api/create-link", async (req, res) => {
         quantity: 1,
       },
     ],
-    success_url: `${baseUrl}/pay/${"{CHECKOUT_SESSION_ID}"}`,
+    success_url: `${baseUrl}/pay/{CHECKOUT_SESSION_ID}`,
     cancel_url: `${baseUrl}/cancel.html`,
   });
 
@@ -126,7 +125,6 @@ app.post("/api/create-link", async (req, res) => {
     private_url: `${baseUrl}/pay/${session.id}`,
   });
 });
-
 
 /* =========================
    PAY → REDIRECT ONLY
@@ -144,15 +142,12 @@ app.get("/pay/:sessionId", (req, res) => {
     return res.redirect(`/wait/${sessionId}`);
   }
 
-  // If NOT paid yet → send to Stripe Checkout
   if (link.paid === 0 && link.checkout_url) {
     return res.redirect(link.checkout_url);
   }
 
-  // Paid → deliver
   res.redirect(`/wait/${sessionId}`);
 });
-
 
 /* =========================
    DELIVERY (ONE-TIME)
