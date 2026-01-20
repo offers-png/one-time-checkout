@@ -49,34 +49,29 @@ app.post(
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    
-
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
 
-        if (!session.id) {
-          return res.status(400).json({ error: "Missing session ID" });
-        }
+      if (!session.id) {
+        return res.status(400).json({ error: "Missing session ID" });
+      }
 
-        const apiKey = "plk_live_" + crypto.randomUUID().replace(/-/g, "");
-        const payload = JSON.stringify({
-          type: "api_key",
-          value: apiKey,
-        });
+      const apiKey = "plk_live_" + crypto.randomUUID().replace(/-/g, "");
+      const payload = JSON.stringify({
+        type: "api_key",
+        value: apiKey,
+      });
 
       const plan = session.metadata?.plan || "7d";
       const expiresAt = PLAN_MAP[plan] ? Date.now() + PLAN_MAP[plan]! : null;
 
-
-        db.prepare(`
-          UPDATE links
-          SET paid = 1,
-              payload = ?,
-              expires_at = ?
-          WHERE session_id = ?
-        `).run(payload, expiresAt, session.id);
-
-    
+      db.prepare(`
+        UPDATE links
+        SET paid = 1,
+            payload = ?,
+            expires_at = ?
+        WHERE session_id = ?
+      `).run(payload, expiresAt, session.id);
     }
 
     res.json({ received: true });
@@ -101,16 +96,13 @@ app.post("/api/create-link", async (req, res) => {
     return res.status(400).json({ error: "Invalid plan" });
   }
 
-  const durationMs = PLAN_MAP[plan];
-  const expiresAt = durationMs ? Date.now() + durationMs : null;
-
   const host = req.get("x-forwarded-host") || req.get("host");
   const proto = req.get("x-forwarded-proto") || req.protocol;
   const baseUrl = `${proto}://${host}`;
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
-    metadata: { plan }, // 👈 ADD THIS LINE
+    metadata: { plan },
     line_items: [
       {
         price_data: {
@@ -125,11 +117,10 @@ app.post("/api/create-link", async (req, res) => {
     cancel_url: `${baseUrl}/cancel.html`,
   });
 
-
   db.prepare(`
-    INSERT INTO links (session_id, checkout_url, expires_at)
-    VALUES (?, ?, ?)
-  `).run(session.id, session.url, expiresAt);
+    INSERT INTO links (session_id, checkout_url)
+    VALUES (?, ?)
+  `).run(session.id, session.url);
 
   res.json({
     private_url: `${baseUrl}/pay/${session.id}`,
@@ -140,29 +131,27 @@ app.post("/api/create-link", async (req, res) => {
 /* =========================
    PAY → REDIRECT ONLY
    ========================= */
-  app.get("/pay/:sessionId", (req, res) => {
-    const { sessionId } = req.params;
+app.get("/pay/:sessionId", (req, res) => {
+  const { sessionId } = req.params;
 
-    const link = db.prepare(`
-      SELECT * FROM links
-      WHERE session_id = ?
-      AND expires_at > ?
-    `).get(sessionId, Date.now()) as any;
+  const link = db.prepare(`
+    SELECT * FROM links
+    WHERE session_id = ?
+    AND (expires_at IS NULL OR expires_at > ?)
+  `).get(sessionId, Date.now()) as any;
 
-    
-    if (!link) {
-      return res.redirect(`/wait/${sessionId}`);
-    }
+  if (!link) {
+    return res.redirect(`/wait/${sessionId}`);
+  }
 
+  // If NOT paid yet → send to Stripe Checkout
+  if (link.paid === 0 && link.checkout_url) {
+    return res.redirect(link.checkout_url);
+  }
 
-    // If NOT paid yet → send to Stripe Checkout
-    if (link.paid === 0 && link.checkout_url) {
-      return res.redirect(link.checkout_url);
-    }
-
-    // Paid → deliver
-    res.redirect(`/wait/${sessionId}`);
-  });
+  // Paid → deliver
+  res.redirect(`/wait/${sessionId}`);
+});
 
 
 /* =========================
@@ -183,7 +172,7 @@ app.get("/deliver/:sessionId", (req, res) => {
   `).get(sessionId) as any;
 
   if (!link) {
-    return res.status(410).send("❌ Link already used or invalid.");
+    return res.status(410).send("Link already used or invalid.");
   }
 
   db.prepare(`
@@ -205,12 +194,12 @@ app.get("/deliver/:sessionId", (req, res) => {
 
 /* =========================
    VERIFY COUPON / API KEY
-  ========================= */
+   ========================= */
 app.post("/api/verify-coupon", express.json(), (req, res) => {
   const key = req.headers["x-api-key"];
   if (key !== process.env.API_KEY) {
     return res.status(401).json({ valid: false });
-}
+  }
   const { coupon_key } = req.body;
 
   const row = db
@@ -219,13 +208,13 @@ app.post("/api/verify-coupon", express.json(), (req, res) => {
        WHERE json_extract(payload,'$.value') = ?
          AND paid = 1
          AND used = 0
-         AND expires_at > ?`
+         AND (expires_at IS NULL OR expires_at > ?)`
     )
     .get(coupon_key, Date.now()) as any;
 
   if (!row) return res.status(400).json({ valid: false });
 
-  db.prepare(`UPDATE links SET used = 1 WHERE id = ?`).run((row as any).id);
+  db.prepare(`UPDATE links SET used = 1 WHERE id = ?`).run(row.id);
   res.json({ valid: true });
 });
 
