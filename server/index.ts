@@ -7,6 +7,12 @@ import crypto from "crypto";
 
 const app = express();
 const db = new Database("links.db");
+const PLAN_MAP: Record<string, number | null> = {
+  "24h": 24 * 60 * 60 * 1000,
+  "7d": 7 * 24 * 60 * 60 * 1000,
+  "30d": 30 * 24 * 60 * 60 * 1000,
+  "lifetime": null
+};
 
 db.prepare(`
   CREATE TABLE IF NOT EXISTS links (
@@ -43,26 +49,32 @@ app.post(
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
+    
+
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
 
-      if (!session.id) {
-        return res.status(400).json({ error: "Missing session ID" });
-      }
+        if (!session.id) {
+          return res.status(400).json({ error: "Missing session ID" });
+        }
 
-      const apiKey = "plk_live_" + crypto.randomUUID().replace(/-/g, "");
+        const apiKey = "plk_live_" + crypto.randomUUID().replace(/-/g, "");
+        const payload = JSON.stringify({
+          type: "api_key",
+          value: apiKey,
+        });
 
-      const payload = JSON.stringify({
-        type: "api_key",
-        value: apiKey,
-      });
+        const expiresAt = Date.now() + PLAN_MAP["7d"]; // TEMP default
 
-      db.prepare(`
-        UPDATE links
-        SET paid = 1,
-            payload = ?
-        WHERE session_id = ?
-      `).run(payload, session.id);
+        db.prepare(`
+          UPDATE links
+          SET paid = 1,
+              payload = ?,
+              expires_at = ?
+          WHERE session_id = ?
+        `).run(payload, expiresAt, session.id);
+
+    
     }
 
     res.json({ received: true });
@@ -77,11 +89,18 @@ app.use(express.static(path.join(process.cwd(), "public")));
    CREATE PAYMENT LINK
    ========================= */
 app.post("/api/create-link", async (req, res) => {
-  const { price } = req.body;
+  const { price, plan = "7d" } = req.body;
 
   if (typeof price !== "number" || price <= 0) {
     return res.status(400).json({ error: "Invalid price" });
   }
+
+  if (!(plan in PLAN_MAP)) {
+    return res.status(400).json({ error: "Invalid plan" });
+  }
+
+  const durationMs = PLAN_MAP[plan];
+  const expiresAt = durationMs ? Date.now() + durationMs : null;
 
   const host = req.get("x-forwarded-host") || req.get("host");
   const proto = req.get("x-forwarded-proto") || req.protocol;
@@ -89,11 +108,12 @@ app.post("/api/create-link", async (req, res) => {
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
+    metadata: { plan },
     line_items: [
       {
         price_data: {
           currency: "usd",
-          product_data: { name: "Payment" },
+          product_data: { name: `API Access (${plan})` },
           unit_amount: Math.round(price * 100),
         },
         quantity: 1,
@@ -106,12 +126,13 @@ app.post("/api/create-link", async (req, res) => {
   db.prepare(`
     INSERT INTO links (session_id, checkout_url, expires_at)
     VALUES (?, ?, ?)
-  `).run(session.id, session.url, Date.now() + 60 * 60 * 1000);
+  `).run(session.id, session.url, expiresAt);
 
   res.json({
     private_url: `${baseUrl}/pay/${session.id}`,
   });
 });
+
 
 /* =========================
    PAY → REDIRECT ONLY
@@ -125,6 +146,7 @@ app.post("/api/create-link", async (req, res) => {
       AND expires_at > ?
     `).get(sessionId, Date.now()) as any;
 
+    
     if (!link) {
       return res.redirect(`/wait/${sessionId}`);
     }
