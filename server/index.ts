@@ -64,7 +64,9 @@ app.post(
           value: apiKey,
         });
 
-        const expiresAt = Date.now() + PLAN_MAP["7d"]; // TEMP default
+      const plan = session.metadata?.plan || "7d";
+      const expiresAt = PLAN_MAP[plan] ? Date.now() + PLAN_MAP[plan]! : null;
+
 
         db.prepare(`
           UPDATE links
@@ -108,7 +110,7 @@ app.post("/api/create-link", async (req, res) => {
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
-    metadata: { plan },
+    metadata: { plan }, // 👈 ADD THIS LINE
     line_items: [
       {
         price_data: {
@@ -122,6 +124,7 @@ app.post("/api/create-link", async (req, res) => {
     success_url: `${baseUrl}/pay/${"{CHECKOUT_SESSION_ID}"}`,
     cancel_url: `${baseUrl}/cancel.html`,
   });
+
 
   db.prepare(`
     INSERT INTO links (session_id, checkout_url, expires_at)
