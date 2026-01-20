@@ -20,6 +20,15 @@ db.prepare(`
   )
 `).run();
 
+db.prepare(`
+  INSERT INTO links (session_id, paid, used, payload, expires_at)
+  VALUES (?, 1, 0, ?, ?)
+`).run(
+  "test_session",
+  JSON.stringify({ type: "coupon_key", value: "TEST_KEY" }),
+  Date.now() + 86400000
+);
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 
