@@ -126,8 +126,9 @@ app.post("/api/create-link", async (req, res) => {
     `).get(sessionId, Date.now()) as any;
 
     if (!link) {
-      return res.status(403).send("❌ Link expired or invalid.");
+      return res.redirect(`/wait/${sessionId}`);
     }
+
 
     // If NOT paid yet → send to Stripe Checkout
     if (link.paid === 0 && link.checkout_url) {
@@ -135,7 +136,7 @@ app.post("/api/create-link", async (req, res) => {
     }
 
     // Paid → deliver
-    res.redirect(`/deliver/${sessionId}`);
+    res.redirect(`/wait/${sessionId}`);
   });
 
 
