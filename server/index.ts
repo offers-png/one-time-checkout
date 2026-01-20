@@ -163,6 +163,28 @@ app.get("/deliver/:sessionId", (req, res) => {
   `);
 });
 
+/* =========================
+   VERIFY COUPON / API KEY
+   ========================= */
+app.post("/api/verify-coupon", express.json(), (req, res) => {
+  const { coupon_key } = req.body;
+
+  const row = db
+    .prepare(
+      `SELECT id FROM links
+       WHERE json_extract(payload,'$.value') = ?
+         AND paid = 1
+         AND used = 0
+         AND expires_at > ?`
+    )
+    .get(coupon_key, Date.now()) as any;
+
+  if (!row) return res.status(400).json({ valid: false });
+
+  db.prepare(`UPDATE links SET used = 1 WHERE id = ?`).run((row as any).id);
+  res.json({ valid: true });
+});
+
 /* ========================= */
 const PORT = 5000;
 app.listen(PORT, "0.0.0.0", () => {
