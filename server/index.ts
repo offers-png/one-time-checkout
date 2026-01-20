@@ -165,8 +165,12 @@ app.get("/deliver/:sessionId", (req, res) => {
 
 /* =========================
    VERIFY COUPON / API KEY
-   ========================= */
+  ========================= */
 app.post("/api/verify-coupon", express.json(), (req, res) => {
+  const key = req.headers["x-api-key"];
+  if (key !== process.env.API_KEY) {
+    return res.status(401).json({ valid: false });
+}
   const { coupon_key } = req.body;
 
   const row = db
