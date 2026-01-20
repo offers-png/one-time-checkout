@@ -13,6 +13,13 @@ const PLAN_MAP: Record<string, number | null> = {
   "lifetime": null
 };
 
+const PRICE_MAP: Record<string, number> = {
+  "24h": 200,       // $2.00
+  "7d": 1000,       // $10.00 
+  "30d": 3000,      // $30.00 
+  "lifetime": 10000 // $100.00 
+};
+
 db.prepare(`
   CREATE TABLE IF NOT EXISTS links (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -85,15 +92,13 @@ app.use(express.static(path.join(process.cwd(), "public")));
    CREATE PAYMENT LINK
    ========================= */
 app.post("/api/create-link", async (req, res) => {
-  const { price, plan = "7d" } = req.body;
-
-  if (typeof price !== "number" || price <= 0) {
-    return res.status(400).json({ error: "Invalid price" });
-  }
+  const { plan = "7d" } = req.body;
 
   if (!(plan in PLAN_MAP)) {
     return res.status(400).json({ error: "Invalid plan" });
   }
+
+  const price = PRICE_MAP[plan];
 
   const host = req.get("x-forwarded-host") || req.get("host");
   const proto = req.get("x-forwarded-proto") || req.protocol;
@@ -107,7 +112,7 @@ app.post("/api/create-link", async (req, res) => {
         price_data: {
           currency: "usd",
           product_data: { name: `API Access (${plan})` },
-          unit_amount: Math.round(price * 100),
+          unit_amount: price,
         },
         quantity: 1,
       },
