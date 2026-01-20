@@ -143,6 +143,10 @@ app.post("/api/create-link", async (req, res) => {
 /* =========================
    DELIVERY (ONE-TIME)
    ========================= */
+app.get("/wait/:sessionId", (req, res) => {
+  res.sendFile(path.join(process.cwd(), "public", "wait.html"));
+});
+
 app.get("/deliver/:sessionId", (req, res) => {
   const { sessionId } = req.params;
 
