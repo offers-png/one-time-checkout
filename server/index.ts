@@ -20,15 +20,6 @@ db.prepare(`
   )
 `).run();
 
-db.prepare(`
-  INSERT INTO links (session_id, paid, used, payload, expires_at)
-  VALUES (?, 1, 0, ?, ?)
-`).run(
-  "test_session",
-  JSON.stringify({ type: "coupon_key", value: "TEST_KEY" }),
-  Date.now() + 86400000
-);
-
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -54,6 +45,10 @@ app.post(
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
+
+      if (!session.id) {
+        return res.status(400).json({ error: "Missing session ID" });
+      }
 
       const apiKey = "plk_live_" + crypto.randomUUID().replace(/-/g, "");
 
@@ -121,22 +116,28 @@ app.post("/api/create-link", async (req, res) => {
 /* =========================
    PAY → REDIRECT ONLY
    ========================= */
-app.get("/pay/:sessionId", (req, res) => {
-  const { sessionId } = req.params;
+  app.get("/pay/:sessionId", (req, res) => {
+    const { sessionId } = req.params;
 
-  const link = db.prepare(`
-    SELECT * FROM links
-    WHERE session_id = ?
-    AND paid = 1
-    AND expires_at > ?
-  `).get(sessionId, Date.now()) as any;
+    const link = db.prepare(`
+      SELECT * FROM links
+      WHERE session_id = ?
+      AND expires_at > ?
+    `).get(sessionId, Date.now()) as any;
 
-  if (!link) {
-    return res.status(403).send("❌ Payment not confirmed or link expired.");
-  }
+    if (!link) {
+      return res.status(403).send("❌ Link expired or invalid.");
+    }
 
-  res.redirect(`/deliver/${sessionId}`);
-});
+    // If NOT paid yet → send to Stripe Checkout
+    if (link.paid === 0 && link.checkout_url) {
+      return res.redirect(link.checkout_url);
+    }
+
+    // Paid → deliver
+    res.redirect(`/deliver/${sessionId}`);
+  });
+
 
 /* =========================
    DELIVERY (ONE-TIME)

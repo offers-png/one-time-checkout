@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Finalizing payment…</title>
+  <script>
+    const sessionId = window.location.pathname.split("/").pop();
+
+    async function check() {
+      const res = await fetch(`/deliver/${sessionId}`);
+      if (res.status === 200) {
+        document.body.innerHTML = await res.text();
+      } else {
+        setTimeout(check, 1500);
+      }
+    }
+
+    setTimeout(check, 1000);
+  </script>
+</head>
+<body style="font-family:system-ui;text-align:center;padding-top:80px">
+  <h2>Finalizing your payment…</h2>
+  <p>Please wait. Do not refresh.</p>
+</body>
+</html>
