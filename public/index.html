@@ -129,6 +129,15 @@
           <option value="30d">30 Days — $30</option>
           <option value="lifetime">Lifetime — $100</option>
         </select>
+        <div style="margin:16px 0;font-size:14px">
+          <label>
+            <input type="checkbox" id="agree" />
+            I agree to the
+            <a href="/terms.html" target="_blank">Terms</a>,
+            <a href="/privacy.html" target="_blank">Privacy Policy</a>,
+            and <a href="/refunds.html" target="_blank">Refund Policy</a>
+          </label>
+        </div>
       </div>
       <button type="submit" id="btn">Generate Payment Link</button>
     </form>
@@ -158,6 +167,10 @@
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (!document.getElementById("agree").checked) {
+        errorDiv.textContent = "You must agree to the terms before continuing.";
+        return;
+      }
       errorDiv.textContent = '';
       resultDiv.classList.remove('show');
       copiedDiv.textContent = '';
