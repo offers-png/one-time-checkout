@@ -106,6 +106,28 @@
       font-size: 13px;
       margin-top: 8px;
     }
+    .terms-checkbox {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 14px;
+      margin: 14px 0;
+      cursor: pointer;
+    }
+    .terms-checkbox input[type="checkbox"] {
+      width: auto;
+      margin: 3px 0 0 0;
+      padding: 0;
+      flex-shrink: 0;
+    }
+    .terms-checkbox span {
+      position: static;
+      transform: none;
+      color: #333;
+    }
+    .terms-checkbox a {
+      color: #635bff;
+    }
   </style>
 </head>
 <body>
@@ -129,23 +151,14 @@
           <option value="30d">30 Days — $30</option>
           <option value="lifetime">Lifetime — $100</option>
         </select>
-        <div style="margin:14px 0; text-align:left;">
-          <label for="agree" style="
-            display:inline-flex;
-            align-items:flex-start;
-            gap:8px;
-            font-size:14px;
-            cursor:pointer;
-          ">
-            <input type="checkbox" id="agree" style="margin:3px 0 0 0; flex-shrink:0;" />
-            <span>I agree to the <a href="/terms.html" target="_blank">Terms</a>, <a href="/privacy.html" target="_blank">Privacy Policy</a>, and <a href="/refunds.html" target="_blank">Refund Policy</a>.</span>
-          </label>
-        </div>
+        <label class="terms-checkbox" for="agree">
+          <input type="checkbox" id="agree" />
+          <span>I agree to the <a href="/terms.html" target="_blank">Terms</a>, <a href="/privacy.html" target="_blank">Privacy Policy</a>, and <a href="/refunds.html" target="_blank">Refund Policy</a>.</span>
+        </label>
       </div>
       <button type="submit" id="btn">Generate Payment Link</button>
     </form>
 
-    
     <div class="error" id="error"></div>
     
     <div class="result" id="result">
@@ -186,7 +199,6 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ plan: planSelect.value })
-
         });
 
         const data = await res.json();
@@ -210,24 +222,6 @@
       copiedDiv.textContent = 'Copied to clipboard!';
       setTimeout(() => copiedDiv.textContent = '', 2000);
     });
- </script>
-  
-  <script>
-    async function generateLink() {
-      const plan = document.getElementById("plan").value;
-
-      const res = await fetch("/api/create-link", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan })
-      });
-
-      const data = await res.json();
-      if (data.private_url) {
-        window.location.href = data.private_url;
-      }
-    }
   </script>
-
 </body>
 </html>
