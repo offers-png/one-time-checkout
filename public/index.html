@@ -147,14 +147,13 @@
     const linkInput = document.getElementById('link');
     const copyBtn = document.getElementById('copy');
     const copiedDiv = document.getElementById('copied');
-    const plan = document.getElementById('plan').value;
+    const planSelect = document.getElementById('plan');
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       errorDiv.textContent = '';
       resultDiv.classList.remove('show');
       copiedDiv.textContent = '';
-      
 
       btn.disabled = true;
       btn.textContent = 'Generating...';
@@ -163,7 +162,7 @@
         const res = await fetch('/api/create-link', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ plan })
+          body: JSON.stringify({ plan: planSelect.value })
 
         });
 
