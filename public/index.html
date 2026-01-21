@@ -122,8 +122,10 @@
     <p>Create a secure, single-use payment link that expires in 1 hour.</p>
     
     
+    <form id="form">
       <button type="submit" id="btn">Generate Payment Link</button>
     </form>
+
     
     <div class="error" id="error"></div>
     
@@ -186,6 +188,24 @@
       copiedDiv.textContent = 'Copied to clipboard!';
       setTimeout(() => copiedDiv.textContent = '', 2000);
     });
+ </script>
+  
+  <script>
+    async function generateLink() {
+      const plan = document.getElementById("plan").value;
+
+      const res = await fetch("/api/create-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan })
+      });
+
+      const data = await res.json();
+      if (data.private_url) {
+        window.location.href = data.private_url;
+      }
+    }
   </script>
+
 </body>
 </html>
