@@ -62,10 +62,9 @@ app.post(
         return res.status(400).json({ error: "Missing session ID" });
       }
 
-      const apiKey = "plk_live_" + crypto.randomUUID().replace(/-/g, "");
+      const apiKey = "plk_" + crypto.randomBytes(24).toString("hex");
       const payload = JSON.stringify({
-        type: "api_key",
-        value: apiKey,
+        key: apiKey,
       });
 
       const plan = session.metadata?.plan || "7d";
@@ -185,11 +184,27 @@ app.get("/deliver/:sessionId", (req, res) => {
     <html>
       <body style="font-family:system-ui;text-align:center;padding-top:80px">
         <h1>Your API Key</h1>
-        <p style="font-family:monospace;background:#f0f0f0;padding:16px;border-radius:8px;display:inline-block">${payload.value || "N/A"}</p>
+        <p style="font-family:monospace;background:#f0f0f0;padding:16px;border-radius:8px;display:inline-block">${payload.key || "N/A"}</p>
         <p style="color:#666;margin-top:16px">Save this key - it will not be shown again.</p>
       </body>
     </html>
   `);
+});
+
+/* =========================
+   GET KEY BY SESSION ID
+   ========================= */
+app.get("/api/get-key", (req, res) => {
+  const { session_id } = req.query;
+
+  const row = db.prepare(`
+    SELECT payload FROM links
+    WHERE session_id = ? AND paid = 1
+  `).get(session_id as string) as any;
+
+  if (!row) return res.status(404).json({ error: "Not found" });
+
+  res.json(JSON.parse(row.payload));
 });
 
 /* =========================
@@ -205,7 +220,7 @@ app.post("/api/verify-coupon", express.json(), (req, res) => {
   const row = db
   .prepare(
     `SELECT id FROM links
-     WHERE json_extract(payload,'$.value') = ?
+     WHERE json_extract(payload,'$.key') = ?
        AND paid = 1
        AND used = 0
        AND (expires_at IS NULL OR expires_at > ?)`
