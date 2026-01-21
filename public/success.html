@@ -20,18 +20,44 @@
       border-radius: 12px;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
       padding: 48px;
-      max-width: 400px;
+      max-width: 500px;
     }
-    .icon { font-size: 64px; margin-bottom: 16px; }
+    .icon { font-size: 64px; margin-bottom: 16px; color: #16a34a; }
     h1 { color: #16a34a; margin-bottom: 12px; }
-    p { color: #666; }
+    p { color: #666; margin-bottom: 24px; }
+    pre {
+      font-size: 14px;
+      background: #f0f0f0;
+      padding: 16px;
+      border-radius: 8px;
+      display: inline-block;
+      word-break: break-all;
+      max-width: 100%;
+    }
+    .warning { color: #dc2626; font-size: 13px; margin-top: 16px; }
   </style>
 </head>
 <body>
   <div class="card">
     <div class="icon">&#10003;</div>
     <h1>Payment Successful</h1>
-    <p>Thank you for your payment. Your transaction has been completed.</p>
+    <p>Your key is below. Save it — it won't be shown again.</p>
+    <pre id="key">Loading...</pre>
+    <p class="warning">Save this key now. This is sent once.</p>
   </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get("session_id");
+
+    fetch(`/api/get-key?session_id=${sessionId}`)
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("key").textContent = data.key || "Not found";
+      })
+      .catch(() => {
+        document.getElementById("key").textContent = "Error loading key";
+      });
+  </script>
 </body>
 </html>

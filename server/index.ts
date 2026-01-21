@@ -116,7 +116,7 @@ app.post("/api/create-link", async (req, res) => {
         quantity: 1,
       },
     ],
-    success_url: `${baseUrl}/pay/{CHECKOUT_SESSION_ID}`,
+    success_url: `${baseUrl}/success.html?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${baseUrl}/cancel.html`,
   });
 
