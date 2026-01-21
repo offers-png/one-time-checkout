@@ -93,12 +93,12 @@ app.use(express.static(path.join(process.cwd(), "public")));
    ========================= */
 app.post("/api/create-link", async (req, res) => {
   const { plan = "7d" } = req.body;
+  const price = PRICE_MAP[plan];
+
 
   if (!(plan in PLAN_MAP)) {
     return res.status(400).json({ error: "Invalid plan" });
   }
-
-  const price = PRICE_MAP[plan];
 
   const host = req.get("x-forwarded-host") || req.get("host");
   const proto = req.get("x-forwarded-proto") || req.protocol;
@@ -150,7 +150,7 @@ app.get("/pay/:sessionId", (req, res) => {
   if (link.paid === 0 && link.checkout_url) {
     return res.redirect(link.checkout_url);
   }
-
+  
   res.redirect(`/wait/${sessionId}`);
 });
 
@@ -172,7 +172,7 @@ app.get("/deliver/:sessionId", (req, res) => {
   `).get(sessionId) as any;
 
   if (!link) {
-    return res.status(410).send("Link already used or invalid.");
+    return res.status(410).send("❌ Link already used or invalid.");
   }
 
   db.prepare(`
@@ -194,12 +194,12 @@ app.get("/deliver/:sessionId", (req, res) => {
 
 /* =========================
    VERIFY COUPON / API KEY
-   ========================= */
+  ========================= */
 app.post("/api/verify-coupon", express.json(), (req, res) => {
   const key = req.headers["x-api-key"];
   if (key !== process.env.API_KEY) {
     return res.status(401).json({ valid: false });
-  }
+}
   const { coupon_key } = req.body;
 
   const row = db
@@ -214,11 +214,10 @@ app.post("/api/verify-coupon", express.json(), (req, res) => {
 
   if (!row) return res.status(400).json({ valid: false });
 
-  db.prepare(`UPDATE links SET used = 1 WHERE id = ?`).run(row.id);
+  db.prepare(`UPDATE links SET used = 1 WHERE id = ?`).run((row as any).id);
   res.json({ valid: true });
 });
 
-/* ========================= */
 const PORT = 5000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log("Server running on port", PORT);

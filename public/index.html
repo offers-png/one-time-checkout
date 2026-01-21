@@ -121,12 +121,7 @@
     <h1>Payment Link Generator</h1>
     <p>Create a secure, single-use payment link that expires in 1 hour.</p>
     
-    <form id="form">
-      <label for="price">Amount (USD)</label>
-      <div class="input-wrapper">
-        <span>$</span>
-        <input type="number" id="price" step="0.01" min="0.50" placeholder="0.00" required>
-      </div>
+    
       <button type="submit" id="btn">Generate Payment Link</button>
     </form>
     
@@ -145,12 +140,12 @@
   <script>
     const form = document.getElementById('form');
     const btn = document.getElementById('btn');
-    const priceInput = document.getElementById('price');
     const errorDiv = document.getElementById('error');
     const resultDiv = document.getElementById('result');
     const linkInput = document.getElementById('link');
     const copyBtn = document.getElementById('copy');
     const copiedDiv = document.getElementById('copied');
+    const plan = document.getElementById('plan').value;
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -158,11 +153,6 @@
       resultDiv.classList.remove('show');
       copiedDiv.textContent = '';
       
-      const price = parseFloat(priceInput.value);
-      if (isNaN(price) || price <= 0) {
-        errorDiv.textContent = 'Please enter a valid amount';
-        return;
-      }
 
       btn.disabled = true;
       btn.textContent = 'Generating...';
@@ -171,7 +161,8 @@
         const res = await fetch('/api/create-link', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ price })
+          body: JSON.stringify({ plan })
+
         });
 
         const data = await res.json();
