@@ -129,15 +129,16 @@
           <option value="30d">30 Days — $30</option>
           <option value="lifetime">Lifetime — $100</option>
         </select>
-        <div style="margin:16px 0;font-size:14px">
-          <label>
-            <input type="checkbox" id="agree" />
+        <div style="margin:16px 0;font-size:14px;display:flex;align-items:center;gap:6px">
+          <input type="checkbox" id="agree" />
+          <span>
             I agree to the
             <a href="/terms.html" target="_blank">Terms</a>,
             <a href="/privacy.html" target="_blank">Privacy Policy</a>,
             and <a href="/refunds.html" target="_blank">Refund Policy</a>
-          </label>
+          </span>
         </div>
+
       </div>
       <button type="submit" id="btn">Generate Payment Link</button>
     </form>
