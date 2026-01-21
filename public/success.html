@@ -49,15 +49,38 @@
   <script>
     const params = new URLSearchParams(window.location.search);
     const sessionId = params.get("session_id");
+    const keyEl = document.getElementById("key");
+    let attempts = 0;
+    const maxAttempts = 20;
 
-    fetch(`/api/get-key?session_id=${sessionId}`)
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById("key").textContent = data.key || "Not found";
-      })
-      .catch(() => {
-        document.getElementById("key").textContent = "Error loading key";
-      });
+    async function fetchKey() {
+      try {
+        const res = await fetch(`/api/get-key?session_id=${sessionId}`);
+        const data = await res.json();
+        
+        if (data.key) {
+          keyEl.textContent = data.key;
+          return true;
+        }
+      } catch (e) {}
+      return false;
+    }
+
+    async function pollForKey() {
+      keyEl.textContent = "Confirming payment...";
+      
+      while (attempts < maxAttempts) {
+        const found = await fetchKey();
+        if (found) return;
+        
+        attempts++;
+        await new Promise(r => setTimeout(r, 1500));
+      }
+      
+      keyEl.textContent = "Payment pending. Please refresh in a moment.";
+    }
+
+    pollForKey();
   </script>
 </body>
 </html>
