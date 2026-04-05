@@ -1,41 +1,58 @@
-# Payment Link Generator
+# KeyAccess — API Key Access Generator
 
-A secure Stripe payment link generator that creates single-use, expiring payment links.
+A secure Stripe payment link generator that sells time-limited, single-use API access keys.
 
 ## Overview
 
-This application allows users to create private Stripe checkout payment links that:
-- Expire after 1 hour
-- Can only be used once
-- Redirect to Stripe checkout when accessed
+Customers visit the landing page, select a plan, pay via Stripe, and receive a unique `plk_` API key instantly on the success page. Keys are single-use and expire based on the plan purchased.
+
+## Plans
+
+| Plan | Price | Duration |
+|------|-------|----------|
+| 24 Hours | $2 | 24h |
+| 7 Days | $10 | 7 days |
+| 30 Days | $30 | 30 days |
+| Lifetime | $100 | Never |
 
 ## Architecture
 
-### Frontend (React + Vite)
-- **Home page**: Payment link generation form with price input
-- **Success page**: Shown after successful payment
-- **Cancel page**: Shown when payment is cancelled
+### Frontend (Static HTML + CSS)
+- `public/style.css` — Shared design system (colors, typography, components)
+- `public/index.html` — Full landing page: hero, how-it-works, benefits, pricing cards, checkout form
+- `public/success.html` — API key reveal page with polling and copy-to-clipboard
+- `public/cancel.html` — Payment cancelled page with try-again link
+- `public/wait.html` — Animated waiting page with spinner
+- `public/terms.html`, `privacy.html`, `refunds.html`, `disclaimer.html` — Legal pages
 
 ### Backend (Express + SQLite)
-- **/api/create-link**: Creates a new Stripe checkout session and stores link in SQLite
+- **/api/create-link**: Creates a Stripe checkout session and stores it in SQLite
 - **/pay/:sessionId**: Validates and redirects to Stripe checkout
-- **/api/webhook**: Handles Stripe webhook events (marks links as used)
+- **/api/webhook**: Handles Stripe webhook events — generates `plk_` key and marks session paid
+- **/api/get-key**: Returns the API key by session ID (used by success page polling)
+- **/api/verify-coupon**: Verifies a key by value, marks it used (protected by `x-api-key` header)
+- **/deliver/:sessionId**: One-time delivery endpoint for wait.html flow
 
-### Database (SQLite)
-- **links table**: Stores session IDs, prices, expiration times, and usage status
+### Database (SQLite — `links.db`)
+- **links table**: `session_id`, `checkout_url`, `paid`, `used`, `payload` (JSON with `key`), `expires_at`
+
+## Key Flow
+
+1. User selects plan on `/` → clicks "Generate Payment Link"
+2. POST `/api/create-link` → creates Stripe session, stores in DB, returns `private_url`
+3. User clicks "Proceed to Checkout" → visits `/pay/:sessionId` → redirected to Stripe
+4. Stripe fires webhook → `/api/webhook` generates `plk_` key, updates DB
+5. User lands on `/success.html?session_id=xxx` → polls `/api/get-key` → sees their key
 
 ## Environment Variables
 
-Required secrets:
-- `STRIPE_SECRET_KEY`: Your Stripe secret key (test or live)
-- `STRIPE_WEBHOOK_SECRET`: Stripe webhook signing secret for secure webhook verification
-
-## Key Files
-
-- `server/index.ts`: Main backend server with Stripe integration
-- `client/src/pages/home.tsx`: Payment link generation UI
-- `shared/schema.ts`: Shared TypeScript types and Zod schemas
+- `STRIPE_SECRET_KEY`: Stripe secret key (test or live)
+- `STRIPE_WEBHOOK_SECRET`: Stripe webhook signing secret
+- `API_KEY`: Internal API key for `/api/verify-coupon` authorization
 
 ## Running the App
 
-The app runs on port 5000 using `npm run dev`.
+```
+npm run dev
+```
+App runs on port 5000.

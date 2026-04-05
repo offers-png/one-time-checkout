@@ -1,10 +1,30 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Finalizing payment…</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finalizing Payment — KeyAccess</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="page-wrap">
+    <div class="status-card">
+      <div class="spinner-wrap">
+        <div class="spinner"></div>
+      </div>
+      <h1 style="font-size:22px;">Finalizing your payment…</h1>
+      <p class="lead">Please wait a moment while we confirm your transaction. <strong>Do not refresh</strong> this page.</p>
+    </div>
+    <p style="margin-top:24px;font-size:13px;color:var(--text-muted);">
+      <a href="/terms.html">Terms</a> ·
+      <a href="/privacy.html">Privacy</a> ·
+      <a href="/refunds.html">Refund Policy</a> ·
+      <a href="/disclaimer.html">Disclaimer</a>
+    </p>
+  </div>
+
   <script>
-    const sessionId = window.location.pathname.split("/").pop();
+    const sessionId = window.location.pathname.split('/').pop();
 
     async function check() {
       const res = await fetch(`/deliver/${sessionId}`);
@@ -17,15 +37,5 @@
 
     setTimeout(check, 1000);
   </script>
-</head>
-<body style="font-family:system-ui;text-align:center;padding-top:80px">
-  <h2>Finalizing your payment…</h2>
-  <p>Please wait. Do not refresh.</p>
-  <footer style="margin-top:40px;text-align:center;font-size:13px;color:#666">
-    <a href="/terms.html">Terms</a> ·
-    <a href="/privacy.html">Privacy</a> ·
-    <a href="/refunds.html">Refund Policy</a> ·
-    <a href="/disclaimer.html">Disclaimer</a>
-  </footer>
 </body>
 </html>

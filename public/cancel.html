@@ -3,35 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Payment Cancelled</title>
-  <style>
-    body { 
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #fef2f2;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 20px;
-    }
-    .card {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      padding: 48px;
-      max-width: 400px;
-    }
-    .icon { font-size: 64px; margin-bottom: 16px; }
-    h1 { color: #dc2626; margin-bottom: 12px; }
-    p { color: #666; }
-  </style>
+  <title>Payment Cancelled — KeyAccess</title>
+  <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <div class="card">
-    <div class="icon">&#10007;</div>
-    <h1>Payment Cancelled</h1>
-    <p>Your payment was cancelled. No charges were made.</p>
+  <div class="page-wrap">
+    <div class="status-card">
+      <div class="status-icon error">✕</div>
+      <h1>Payment Cancelled</h1>
+      <p class="lead">No charges were made. Your order has been cancelled and nothing was processed.</p>
+      <a href="/" class="btn-secondary" data-testid="link-try-again">← Try Again</a>
+    </div>
+    <p style="margin-top:24px;font-size:13px;color:var(--text-muted);">
+      Need help? Review our <a href="/refunds.html">Refund Policy</a>.
+    </p>
   </div>
 </body>
 </html>

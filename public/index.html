@@ -3,224 +3,291 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Payment Link Generator</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { 
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f5f5f5;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .card {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      padding: 40px;
-      max-width: 420px;
-      width: 100%;
-    }
-    h1 { 
-      font-size: 24px;
-      margin-bottom: 8px;
-      color: #1a1a1a;
-    }
-    p { 
-      color: #666;
-      margin-bottom: 24px;
-      font-size: 14px;
-    }
-    label {
-      display: block;
-      font-weight: 500;
-      margin-bottom: 8px;
-      color: #333;
-    }
-    .input-wrapper {
-      position: relative;
-      margin-bottom: 20px;
-    }
-    .input-wrapper span {
-      position: absolute;
-      left: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #666;
-      font-size: 16px;
-    }
-    input {
-      width: 100%;
-      padding: 12px 12px 12px 30px;
-      font-size: 16px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      outline: none;
-    }
-    input:focus { border-color: #635bff; }
-    button {
-      width: 100%;
-      padding: 14px;
-      background: #635bff;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    button:hover { background: #5147e6; }
-    button:disabled { background: #ccc; cursor: not-allowed; }
-    .result {
-      margin-top: 24px;
-      padding: 16px;
-      background: #f0f9ff;
-      border-radius: 8px;
-      display: none;
-    }
-    .result.show { display: block; }
-    .result label { color: #0369a1; margin-bottom: 8px; }
-    .link-box {
-      display: flex;
-      gap: 8px;
-    }
-    .link-box input {
-      flex: 1;
-      padding: 10px;
-      font-size: 13px;
-    }
-    .link-box button {
-      width: auto;
-      padding: 10px 16px;
-    }
-    .error {
-      color: #dc2626;
-      margin-top: 12px;
-      font-size: 14px;
-    }
-    .copied {
-      color: #16a34a;
-      font-size: 13px;
-      margin-top: 8px;
-    }
-    .terms-checkbox {
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-      font-size: 14px;
-      margin: 14px 0;
-      cursor: pointer;
-    }
-    .terms-checkbox input[type="checkbox"] {
-      width: auto;
-      margin: 3px 0 0 0;
-      padding: 0;
-      flex-shrink: 0;
-    }
-    .terms-checkbox span {
-      position: static;
-      transform: none;
-      color: #333;
-    }
-    .terms-checkbox a {
-      color: #635bff;
-    }
-  </style>
+  <title>API Key Access — Instant, Secure Credentials</title>
+  <meta name="description" content="Purchase time-limited, single-use API access keys instantly. Pay once via Stripe, receive your unique plk_ key in seconds.">
+  <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <div class="card">
-    <h1>Payment Link Generator</h1>
-    <p>Create a secure, single-use payment link that expires in 1 hour.</p>
-    
-    <form id="form">
-      <div style="margin-bottom:16px">
-        <label style="font-weight:600">Choose Plan</label>
-        <select id="plan" style="
-          width:100%;
-          padding:12px;
-          font-size:16px;
-          border-radius:8px;
-          margin-top:6px;
-          border:1px solid #ddd;
-        ">
-          <option value="24h">24 Hours — $2</option>
-          <option value="7d" selected>7 Days — $10</option>
-          <option value="30d">30 Days — $30</option>
-          <option value="lifetime">Lifetime — $100</option>
-        </select>
-        <label class="terms-checkbox" for="agree">
-          <input type="checkbox" id="agree" />
-          <span>I agree to the <a href="/terms.html" target="_blank">Terms</a>, <a href="/privacy.html" target="_blank">Privacy Policy</a>, and <a href="/refunds.html" target="_blank">Refund Policy</a>.</span>
-        </label>
-      </div>
-      <button type="submit" id="btn">Generate Payment Link</button>
-    </form>
 
-    <div class="error" id="error"></div>
-    
-    <div class="result" id="result">
-      <label>Your Payment Link</label>
-      <div class="link-box">
-        <input type="text" id="link" readonly>
-        <button type="button" id="copy">Copy</button>
+  <!-- ── HEADER ── -->
+  <header>
+    <div class="container">
+      <div class="header-inner">
+        <a href="/" class="logo">
+          <div class="logo-icon">🔑</div>
+          KeyAccess
+        </a>
+        <a href="#pricing" class="header-cta">
+          <span>View Plans</span> →
+        </a>
       </div>
-      <div class="copied" id="copied"></div>
     </div>
-  </div>
+  </header>
+
+  <!-- ── HERO ── -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-badge">🔐 Secure API Credentials</div>
+      <h1>API Access Keys,<br>Delivered Instantly</h1>
+      <p>Purchase a time-limited, single-use API key in seconds. Pay once via Stripe — your unique <code style="background:rgba(255,255,255,0.15);padding:2px 8px;border-radius:4px;font-size:15px;">plk_</code> key arrives the moment your payment clears.</p>
+      <a href="#pricing" class="hero-cta">Get Access →</a>
+    </div>
+  </section>
+
+  <!-- ── HOW IT WORKS ── -->
+  <section class="steps-section">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-label">How it works</div>
+        <h2 class="section-title">Four simple steps to your key</h2>
+        <p class="section-subtitle">From selection to a working API key — the whole process takes under a minute.</p>
+      </div>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <h3>Choose a plan</h3>
+          <p>Pick 24-hour, 7-day, 30-day, or Lifetime access based on how long you need credentials.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <h3>Pay via Stripe</h3>
+          <p>Complete checkout securely through Stripe. All major cards accepted. No account required.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <h3>Receive your key</h3>
+          <p>Your unique <code>plk_</code> API key is generated instantly and shown on the confirmation page.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">4</div>
+          <h3>Use &amp; verify</h3>
+          <p>Pass your key to the verification endpoint. It validates your access and marks the key as used.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── BENEFITS ── -->
+  <section class="benefits-section">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-label">Why KeyAccess</div>
+        <h2 class="section-title">Built for secure, one-time access</h2>
+        <p class="section-subtitle">Every part of the system is designed to make sure only the right person uses the right key at the right time.</p>
+      </div>
+      <div class="benefits-grid">
+        <div class="benefit-card">
+          <div class="benefit-icon">🔑</div>
+          <h3>Single-use keys</h3>
+          <p>Each key is uniquely generated for your session. Once verified, it's permanently invalidated — no re-use.</p>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">⏱</div>
+          <h3>Time-limited access</h3>
+          <p>Keys expire automatically based on the plan you choose. Access starts the moment you pay.</p>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">⚡</div>
+          <h3>Instant delivery</h3>
+          <p>No email, no waiting. Your key is generated and shown on screen as soon as Stripe confirms payment.</p>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">🔒</div>
+          <h3>Secure verification</h3>
+          <p>Use the <code>/api/verify-coupon</code> endpoint to validate keys server-side before granting access.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PRICING ── -->
+  <section class="pricing-section" id="pricing">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-label">Pricing</div>
+        <h2 class="section-title">Simple, one-time pricing</h2>
+        <p class="section-subtitle">No subscriptions. No renewals. Pay once and get instant access for as long as your plan covers.</p>
+      </div>
+      <div class="plans-grid">
+        <!-- 24h -->
+        <div class="plan-card" data-plan="24h" onclick="selectPlan('24h')">
+          <div class="plan-name">24 Hours</div>
+          <div class="plan-price">$2</div>
+          <div class="plan-duration">One-time · expires in 24h</div>
+          <ul class="plan-features">
+            <li><span class="check">✓</span> Single-use key</li>
+            <li><span class="check">✓</span> Instant delivery</li>
+            <li><span class="check">✓</span> 24-hour access window</li>
+          </ul>
+          <button class="plan-btn">Select Plan →</button>
+        </div>
+        <!-- 7d -->
+        <div class="plan-card selected" data-plan="7d" onclick="selectPlan('7d')">
+          <div class="plan-badge">Most Popular</div>
+          <div class="plan-name">7 Days</div>
+          <div class="plan-price">$10</div>
+          <div class="plan-duration">One-time · expires in 7 days</div>
+          <ul class="plan-features">
+            <li><span class="check">✓</span> Single-use key</li>
+            <li><span class="check">✓</span> Instant delivery</li>
+            <li><span class="check">✓</span> 7-day access window</li>
+          </ul>
+          <button class="plan-btn">Select Plan →</button>
+        </div>
+        <!-- 30d -->
+        <div class="plan-card" data-plan="30d" onclick="selectPlan('30d')">
+          <div class="plan-name">30 Days</div>
+          <div class="plan-price">$30</div>
+          <div class="plan-duration">One-time · expires in 30 days</div>
+          <ul class="plan-features">
+            <li><span class="check">✓</span> Single-use key</li>
+            <li><span class="check">✓</span> Instant delivery</li>
+            <li><span class="check">✓</span> 30-day access window</li>
+          </ul>
+          <button class="plan-btn">Select Plan →</button>
+        </div>
+        <!-- lifetime -->
+        <div class="plan-card" data-plan="lifetime" onclick="selectPlan('lifetime')">
+          <div class="plan-name">Lifetime</div>
+          <div class="plan-price">$100</div>
+          <div class="plan-duration">One-time · never expires</div>
+          <ul class="plan-features">
+            <li><span class="check">✓</span> Single-use key</li>
+            <li><span class="check">✓</span> Instant delivery</li>
+            <li><span class="check">✓</span> Never expires</li>
+          </ul>
+          <button class="plan-btn">Select Plan →</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CHECKOUT ── -->
+  <section class="checkout-section" id="checkout">
+    <div class="container">
+      <div class="checkout-card">
+        <h2 class="checkout-heading">Complete Your Order</h2>
+        <p class="checkout-sub">Review your plan, agree to the terms, and proceed to secure checkout.</p>
+
+        <div class="plan-summary">
+          <span class="summary-name" id="summary-name">7 Days Access</span>
+          <span class="summary-price" id="summary-price">$10</span>
+        </div>
+
+        <form id="form">
+          <input type="hidden" id="plan" value="7d">
+          <label class="terms-checkbox" for="agree">
+            <input type="checkbox" id="agree">
+            <span>I agree to the <a href="/terms.html" target="_blank">Terms of Service</a>, <a href="/privacy.html" target="_blank">Privacy Policy</a>, and <a href="/refunds.html" target="_blank">Refund Policy</a>.</span>
+          </label>
+          <button type="submit" id="btn" class="btn-primary" data-testid="button-submit">Generate Payment Link →</button>
+        </form>
+
+        <div class="error-msg" id="error"></div>
+
+        <div class="result-box" id="result">
+          <div class="result-box-label">Your Payment Link</div>
+          <div class="link-row">
+            <input type="text" id="link" readonly data-testid="input-payment-link">
+            <button type="button" id="copy" class="btn-copy" data-testid="button-copy-link">Copy</button>
+          </div>
+          <a id="proceed-btn" href="#" target="_blank" class="btn-proceed" data-testid="link-proceed">Proceed to Checkout →</a>
+          <div class="copied-msg" id="copied"></div>
+        </div>
+
+        <p style="font-size:12px;color:var(--text-muted);margin-top:20px;text-align:center;">
+          🔒 Payments processed securely by <strong>Stripe</strong>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer>
+    <div class="container">
+      <div class="footer-links">
+        <a href="/terms.html">Terms of Service</a>
+        <a href="/privacy.html">Privacy Policy</a>
+        <a href="/refunds.html">Refund Policy</a>
+        <a href="/disclaimer.html">Disclaimer</a>
+      </div>
+      <div class="footer-copy">© 2025 KeyAccess. All rights reserved.</div>
+    </div>
+  </footer>
 
   <script>
-    const form = document.getElementById('form');
-    const btn = document.getElementById('btn');
+    const PLAN_DETAILS = {
+      '24h':      { name: '24 Hours Access',  price: '$2'   },
+      '7d':       { name: '7 Days Access',    price: '$10'  },
+      '30d':      { name: '30 Days Access',   price: '$30'  },
+      'lifetime': { name: 'Lifetime Access',  price: '$100' },
+    };
+
+    let selectedPlan = '7d';
+
+    function selectPlan(plan) {
+      selectedPlan = plan;
+      document.getElementById('plan').value = plan;
+
+      document.querySelectorAll('.plan-card').forEach(c => {
+        c.classList.toggle('selected', c.dataset.plan === plan);
+      });
+
+      const details = PLAN_DETAILS[plan];
+      document.getElementById('summary-name').textContent = details.name;
+      document.getElementById('summary-price').textContent = details.price;
+
+      document.getElementById('checkout').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    const form     = document.getElementById('form');
+    const btn      = document.getElementById('btn');
     const errorDiv = document.getElementById('error');
-    const resultDiv = document.getElementById('result');
-    const linkInput = document.getElementById('link');
-    const copyBtn = document.getElementById('copy');
-    const copiedDiv = document.getElementById('copied');
-    const planSelect = document.getElementById('plan');
+    const resultDiv= document.getElementById('result');
+    const linkInput= document.getElementById('link');
+    const copyBtn  = document.getElementById('copy');
+    const copiedDiv= document.getElementById('copied');
+    const proceedBtn = document.getElementById('proceed-btn');
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (!document.getElementById("agree").checked) {
-        errorDiv.textContent = "You must agree to the terms before continuing.";
+      if (!document.getElementById('agree').checked) {
+        errorDiv.textContent = 'You must agree to the terms before continuing.';
+        errorDiv.classList.add('show');
         return;
       }
-      errorDiv.textContent = '';
+      errorDiv.classList.remove('show');
       resultDiv.classList.remove('show');
       copiedDiv.textContent = '';
 
       btn.disabled = true;
-      btn.textContent = 'Generating...';
+      btn.textContent = 'Generating…';
 
       try {
         const res = await fetch('/api/create-link', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ plan: planSelect.value })
+          body: JSON.stringify({ plan: selectedPlan })
         });
-
         const data = await res.json();
-        
-        if (!res.ok) {
-          throw new Error(data.error || 'Failed to create link');
-        }
+        if (!res.ok) throw new Error(data.error || 'Failed to create link');
 
         linkInput.value = data.private_url;
+        proceedBtn.href = data.private_url;
         resultDiv.classList.add('show');
       } catch (err) {
         errorDiv.textContent = err.message;
+        errorDiv.classList.add('show');
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Generate Payment Link';
+        btn.textContent = 'Generate Payment Link →';
       }
     });
 
     copyBtn.addEventListener('click', async () => {
       await navigator.clipboard.writeText(linkInput.value);
-      copiedDiv.textContent = 'Copied to clipboard!';
-      setTimeout(() => copiedDiv.textContent = '', 2000);
+      copiedDiv.textContent = '✓ Copied to clipboard!';
+      setTimeout(() => copiedDiv.textContent = '', 2500);
     });
   </script>
 </body>
