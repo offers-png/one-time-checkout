@@ -1,0 +1,48 @@
+feat: full UI redesign — landing page + all public pages (Task #1)
+
+## Summary
+Turned the bare-bones form into a modern, professional landing page and
+redesigned all public-facing pages with a consistent shared design system.
+
+## New files
+- public/style.css: Comprehensive shared design system — CSS variables,
+  typography, button styles, card styles, hero, steps, benefits, pricing
+  cards, checkout form, status pages (success/cancel/wait), spinner
+  animation, legal page layout, responsive breakpoints.
+
+## Redesigned pages
+
+### public/index.html — Full landing page
+- Sticky header with logo + "View Plans" CTA
+- Hero section: gradient background, badge, large headline, CTA button
+- "How it works": 4 numbered step cards explaining the purchase flow
+- Benefits section: 4 cards (single-use, time-limited, instant, secure)
+- Pricing section: 4 interactive plan cards (24h/$2, 7d/$10, 30d/$30,
+  Lifetime/$100) — clicking selects the plan and scrolls to checkout
+- Checkout form: plan summary, terms checkbox, "Get Access →" submit
+- Result box: payment link, copy button, "Proceed to Checkout" button
+- Footer: all 4 legal links + copyright
+- All original JS form logic preserved
+
+### public/success.html
+- Dark-themed key-box with animated loading state
+- Copy-to-clipboard button (enabled after key resolves)
+- Warning box: "save this key now"
+- All 20-attempt polling logic preserved
+
+### public/cancel.html
+- Status icon, friendly message, "Try Again" link
+
+### public/wait.html
+- CSS spinner animation, reassuring "do not refresh" copy
+- Deliver-check polling logic preserved
+
+### Legal pages (terms, privacy, refunds, disclaimer)
+- Shared stylesheet applied with consistent typography and spacing
+- Back link, h1 + effective date, sectioned content, cross-nav links
+
+## Consistent header/footer on all pages
+Every page now has the same sticky header (KeyAccess logo → /) and
+footer (4 legal links + copyright line).
+
+## No backend changes.
