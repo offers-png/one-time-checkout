@@ -180,7 +180,7 @@
             <input type="checkbox" id="agree">
             <span>I agree to the <a href="/terms.html" target="_blank">Terms of Service</a>, <a href="/privacy.html" target="_blank">Privacy Policy</a>, and <a href="/refunds.html" target="_blank">Refund Policy</a>.</span>
           </label>
-          <button type="submit" id="btn" class="btn-primary" data-testid="button-submit">Generate Payment Link →</button>
+          <button type="submit" id="btn" class="btn-primary" data-testid="button-submit">Get Access →</button>
         </form>
 
         <div class="error-msg" id="error"></div>
@@ -280,7 +280,7 @@
         errorDiv.classList.add('show');
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Generate Payment Link →';
+        btn.textContent = 'Get Access →';
       }
     });
 
