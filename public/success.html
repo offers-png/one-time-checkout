@@ -59,14 +59,13 @@
     </div>
   </footer>
 
-  <script>
-    <script>
-const params    = new URLSearchParams(window.location.search);
+ <script>
+const params = new URLSearchParams(window.location.search);
 const sessionId = params.get('session_id');
 
-const keyEl     = document.getElementById('key');
-const copyBtn   = document.getElementById('copy-key-btn');
-const copiedNote= document.getElementById('copied-note');
+const keyEl = document.getElementById('key');
+const copyBtn = document.getElementById('copy-key-btn');
+const copiedNote = document.getElementById('copied-note');
 
 let resolvedKey = null;
 
@@ -84,7 +83,6 @@ async function loadKey() {
       keyEl.textContent = 'Payment not verified';
       keyEl.classList.remove('loading');
     }
-
   } catch (e) {
     keyEl.textContent = 'Error loading key';
     keyEl.classList.remove('loading');
