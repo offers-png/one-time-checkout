@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: one-time-checkout
+    runtime: static
+    staticPublishPath: ./public
+    pullRequestPreviewsEnabled: false
