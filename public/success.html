@@ -60,56 +60,49 @@
   </footer>
 
   <script>
-    const params    = new URLSearchParams(window.location.search);
-    const sessionId = params.get('session_id');
-    const keyEl     = document.getElementById('key');
-    const copyBtn   = document.getElementById('copy-key-btn');
-    const copiedNote= document.getElementById('copied-note');
-    let attempts    = 0;
-    const maxAttempts = 20;
-    let resolvedKey = null;
+    <script>
+const params    = new URLSearchParams(window.location.search);
+const sessionId = params.get('session_id');
 
-    async function fetchKey() {
-      try {
-        const res  = await fetch(`/api/get-key?session_id=${sessionId}`);
-        const data = await res.json();
-        if (data.key) {
-          resolvedKey = data.key;
-          return true;
-        }
-      } catch (e) {}
-      return false;
-    }
+const keyEl     = document.getElementById('key');
+const copyBtn   = document.getElementById('copy-key-btn');
+const copiedNote= document.getElementById('copied-note');
 
-    async function pollForKey() {
-      while (attempts < maxAttempts) {
-        const found = await fetchKey();
-        if (found) {
-          keyEl.textContent = resolvedKey;
-          keyEl.classList.remove('loading');
-          copyBtn.disabled = false;
-          return;
-        }
-        attempts++;
-        await new Promise(r => setTimeout(r, 1500));
-      }
-      keyEl.textContent = 'Payment pending. Please refresh in a moment.';
+let resolvedKey = null;
+
+async function loadKey() {
+  try {
+    const res = await fetch(`https://main-backend-k32m.onrender.com/api/checkout/verify-session?session_id=${sessionId}`);
+    const data = await res.json();
+
+    if (data.api_key) {
+      resolvedKey = data.api_key;
+      keyEl.textContent = resolvedKey;
       keyEl.classList.remove('loading');
-      keyEl.classList.add('error-state');
+      copyBtn.disabled = false;
+    } else {
+      keyEl.textContent = 'Payment not verified';
+      keyEl.classList.remove('loading');
     }
 
-    copyBtn.addEventListener('click', async () => {
-      if (!resolvedKey) return;
-      await navigator.clipboard.writeText(resolvedKey);
-      copiedNote.style.display = 'block';
-      copyBtn.textContent = '✓ Copied!';
-      setTimeout(() => {
-        copiedNote.style.display = 'none';
-        copyBtn.textContent = '📋 Copy Key to Clipboard';
-      }, 3000);
-    });
+  } catch (e) {
+    keyEl.textContent = 'Error loading key';
+    keyEl.classList.remove('loading');
+  }
+}
 
-    pollForKey();
-  </script>
+copyBtn.addEventListener('click', async () => {
+  if (!resolvedKey) return;
+  await navigator.clipboard.writeText(resolvedKey);
+  copiedNote.style.display = 'block';
+  copyBtn.textContent = '✓ Copied!';
+  setTimeout(() => {
+    copiedNote.style.display = 'none';
+    copyBtn.textContent = '📋 Copy Key to Clipboard';
+  }, 3000);
+});
+
+loadKey();
+</script>
 </body>
 </html>
