@@ -264,7 +264,7 @@
       btn.textContent = 'Generating…';
 
       try {
-        const res = await fetch('https://main-backend-k32m.onrender.com/api/checkout/create-link', {
+        const res = await fetch('/api/create-link', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ plan: selectedPlan })
