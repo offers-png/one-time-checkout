@@ -1,12 +1,5 @@
 {
   "name": "one-time-checkout",
-  "type": "module",
-  "scripts": {
-    "dev": "tsx server/index.ts"
-  },
-  "dependencies": {
-    "express": "^4.19.2",
-    "stripe": "^20.1.2",
-    "better-sqlite3": "^9.4.0"
-  }
+  "private": true,
+  "type": "module"
 }
